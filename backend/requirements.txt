@@ -1,0 +1,79 @@
+# =====================================================
+# REQUIREMENTS.TXT ACTUALIZADO
+# Proyecto: Torneo de Microfútbol - Backend FastAPI
+# Fecha: Diciembre 2025
+# Python: 3.9+
+# =====================================================
+
+# ===== FRAMEWORK WEB =====
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# ===== BASE DE DATOS =====
+sqlalchemy==2.0.23
+pymysql==1.1.0
+pydantic-settings==2.1.0
+
+# ===== SEGURIDAD (NUEVO - CRÍTICO) =====
+# JWT para autenticación
+python-jose[cryptography]==3.3.0
+
+# Hashing de contraseñas con bcrypt
+passlib[bcrypt]==1.7.4
+
+# ===== UTILIDADES =====
+python-dotenv==1.0.0
+
+# ===== DESARROLLO Y TESTING =====
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+
+# ===== OPCIONAL (Recomendado) =====
+# Rate limiting
+slowapi==0.1.9
+
+# CORS y middleware
+starlette==0.27.0
+
+# Validación de archivos
+python-magic==0.4.27
+
+# Logging avanzado
+loguru==0.7.2
+
+# =====================================================
+# INSTALACIÓN
+# =====================================================
+# 
+# 1. Crear entorno virtual:
+#    python -m venv venv
+#    source venv/bin/activate  # Linux/Mac
+#    venv\Scripts\activate     # Windows
+#
+# 2. Instalar dependencias:
+#    pip install -r requirements.txt
+#
+# 3. Verificar instalación:
+#    pip list
+#
+# =====================================================
+# NOTAS
+# =====================================================
+#
+# CRÍTICO:
+# - python-jose[cryptography] es REQUERIDO para JWT
+# - passlib[bcrypt] es REQUERIDO para hashing
+#
+# SEGURIDAD:
+# - Actualizar dependencias regularmente:
+#   pip list --outdated
+#   pip install --upgrade <package>
+#
+# =====================================================
