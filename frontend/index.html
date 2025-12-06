@@ -139,6 +139,11 @@
             color: white;
         }
 
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -184,6 +189,65 @@
         .card h3 {
             color: #667eea;
             margin-bottom: 15px;
+        }
+
+        /* NUEVO: Estilos para la sección de jugadores expandible */
+        .team-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .team-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .team-card-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .players-section {
+            margin-top: 20px;
+            border-top: 2px solid #e9ecef;
+            padding-top: 20px;
+        }
+
+        .players-section.hidden {
+            display: none;
+        }
+
+        .player-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .player-details {
+            font-size: 14px;
+            color: #666;
         }
 
         .badge {
@@ -405,6 +469,43 @@
         .stat-card p {
             opacity: 0.9;
         }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .toggle-players-btn {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .toggle-players-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .player-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -455,26 +556,14 @@
                 <label>Registrarse como:</label>
                 <select id="registerRole" required>
                     <option value="">Seleccione...</option>
-                    <option value="delegado">Delegado de Equipo</option>
-                    <option value="admin">Administrador (requiere código)</option>
+                    <option value="2">Delegado de Equipo</option>
                 </select>
-            </div>
-            <div id="adminCodeGroup" class="form-group hidden">
-                <label>Código de Administrador:</label>
-                <input type="text" id="adminCode" placeholder="Solicitar al organizador">
-                <small style="color: #dc3545;">⚠️ Contacte al Comité Organizador para obtener el código</small>
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%;">Registrarse</button>
         </form>
 
         <div style="margin-top: 20px; text-align: center;">
             <a href="#" id="viewPublicLink" style="color: #667eea;">Ver vista pública</a>
-        </div>
-        <div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 8px; font-size: 14px;">
-            <strong>ℹ️ Información:</strong><br>
-            • <strong>Delegados:</strong> Pueden registrarse libremente<br>
-            • <strong>Administradores:</strong> Requieren código secreto<br>
-            • Código actual: <code>ADMIN2024</code> (cambiar en producción)
         </div>
     </div>
 
@@ -622,7 +711,7 @@
             <form id="createTeamForm">
                 <div class="form-group">
                     <label>Nombre del Equipo:</label>
-                    <input type="text" id="teamName" required>
+                    <input type="text" id="teamName" required placeholder="Ej: Los Tigres">
                 </div>
                 <button type="submit" class="btn btn-primary">Crear Equipo</button>
             </form>
@@ -640,11 +729,11 @@
                 <input type="hidden" id="playerTeamId">
                 <div class="form-group">
                     <label>Cédula:</label>
-                    <input type="text" id="playerCedula" required>
+                    <input type="text" id="playerCedula" required placeholder="1234567890">
                 </div>
                 <div class="form-group">
                     <label>Nombre Completo:</label>
-                    <input type="text" id="playerName" required>
+                    <input type="text" id="playerName" required placeholder="Juan Pérez">
                 </div>
                 <div class="form-group">
                     <label>Fecha de Nacimiento:</label>
@@ -658,7 +747,7 @@
                 </div>
                 <div class="form-group">
                     <label>Número de Camiseta (1-20):</label>
-                    <input type="number" id="playerJersey" min="1" max="20">
+                    <input type="number" id="playerJersey" min="1" max="20" placeholder="10">
                 </div>
                 <div class="form-group">
                     <label>Foto del Jugador:</label>
@@ -709,7 +798,6 @@
     <script>
         // ===== CONFIGURACIÓN GLOBAL =====
         const API_URL = 'http://127.0.0.1:8000';
-        const ADMIN_SECRET_CODE = 'ADMIN2024'; // Código secreto para registrarse como admin
         let currentUser = null;
         let authToken = null;
 
@@ -749,16 +837,6 @@
             document.getElementById('tabRegister').style.borderBottom = '3px solid #667eea';
             document.getElementById('loginAlert').innerHTML = '';
         }
-
-        // Mostrar/ocultar campo de código admin
-        document.getElementById('registerRole').addEventListener('change', (e) => {
-            const adminCodeGroup = document.getElementById('adminCodeGroup');
-            if (e.target.value === 'admin') {
-                adminCodeGroup.classList.remove('hidden');
-            } else {
-                adminCodeGroup.classList.add('hidden');
-            }
-        });
 
         async function apiRequest(endpoint, options = {}) {
             const defaultOptions = {
@@ -823,7 +901,6 @@
             const password = document.getElementById('loginPassword').value;
 
             try {
-                // LOGIN: usa POST /users/login con JSON
                 const response = await apiRequest('/users/login', {
                     method: 'POST',
                     skipAuth: true,
@@ -836,7 +913,6 @@
                 authToken = response.access_token;
                 localStorage.setItem('authToken', authToken);
 
-                // Cargar datos del usuario actual
                 await loadUserData();
                 showMainApp();
             } catch (error) {
@@ -852,10 +928,8 @@
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
             const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-            const role = document.getElementById('registerRole').value;
-            const adminCode = document.getElementById('adminCode').value;
+            const roleId = document.getElementById('registerRole').value;
 
-            // Validaciones frontend
             if (password !== passwordConfirm) {
                 showLoginAlert('Las contraseñas no coinciden', 'error');
                 return;
@@ -866,24 +940,7 @@
                 return;
             }
 
-            // Validar código admin
-            if (role === 'admin') {
-                if (adminCode !== ADMIN_SECRET_CODE) {
-                    showLoginAlert('Código de administrador incorrecto', 'error');
-                    return;
-                }
-            }
-
             try {
-                // Si tu endpoint /users/roles/ requiere autenticación esto puede fallar,
-                // en ese caso puedes asignar el rol por defecto desde el backend.
-                const roles = await apiRequest('/users/roles/', { skipAuth: true });
-                const selectedRole = roles.find(r => r.nombre === (role === 'admin' ? 'Administrador' : 'Delegado'));
-
-                if (!selectedRole) {
-                    throw new Error('Rol no encontrado en el sistema');
-                }
-
                 await apiRequest('/users/register', {
                     method: 'POST',
                     skipAuth: true,
@@ -891,8 +948,7 @@
                         nombre_usuario: name,
                         email: email,
                         password: password,
-                        id_rol: selectedRole.id_rol,
-                        admin_code: role === 'admin' ? adminCode : undefined
+                        id_rol: parseInt(roleId)
                     })
                 });
 
@@ -910,13 +966,12 @@
                 const me = await apiRequest('/users/me');
                 currentUser = me;
 
-                const nombre = me.nombre_usuario || me.full_name || me.name || me.email;
-                const rolNombre = (me.rol && me.rol.nombre) || me.role || 'Sin rol';
+                const nombre = me.nombre_usuario || me.email;
+                const rolNombre = (me.rol && me.rol.nombre) || 'Sin rol';
 
                 document.getElementById('userNameDisplay').textContent = nombre;
                 document.getElementById('userRoleDisplay').textContent = rolNombre;
 
-                // Guardar rol en localStorage por si lo quieres usar luego
                 localStorage.setItem('userRole', rolNombre);
             } catch (error) {
                 console.error('Error cargando datos del usuario:', error);
@@ -929,7 +984,7 @@
             document.getElementById('publicScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             setupNavigation();
-            // Sección inicial según el rol
+            
             if (currentUser.rol && currentUser.rol.nombre === 'Administrador') {
                 showSection('sectionDashboard');
                 loadDashboard();
@@ -967,7 +1022,6 @@
                     <button class="nav-tab" onclick="showSection('sectionPublic')">Vista Pública</button>
                 `;
             } else {
-                // Delegado u otro rol
                 tabs = `
                     <button class="nav-tab active" onclick="showSection('sectionMyTeams')">Mis Equipos</button>
                     <button class="nav-tab" onclick="showSection('sectionPublic')">Vista Pública</button>
@@ -1016,7 +1070,7 @@
                         <h3>${user.nombre_usuario}</h3>
                         <p><strong>Email:</strong> ${user.email}</p>
                         <p><span class="badge badge-info">${user.rol.nombre}</span></p>
-                        <button class="btn btn-danger" onclick="deleteUser(${user.id_usuario})">Eliminar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id_usuario})">Eliminar</button>
                     </div>
                 `).join('');
             } catch (error) {
@@ -1033,7 +1087,7 @@
             e.preventDefault();
 
             try {
-                await apiRequest('/users/', {
+                await apiRequest('/users/register', {
                     method: 'POST',
                     body: JSON.stringify({
                         nombre_usuario: document.getElementById('userName').value,
@@ -1066,22 +1120,144 @@
             }
         }
 
-        // ===== GESTIÓN DE EQUIPOS =====
+        // ===== GESTIÓN DE EQUIPOS - MEJORADO CON VISTA DE JUGADORES =====
         async function loadMyTeams() {
             try {
                 const teams = await apiRequest('/teams/');
                 const container = document.getElementById('myTeamsList');
 
-                container.innerHTML = teams.map(team => `
-                    <div class="card">
-                        <h3>${team.nombre}</h3>
-                        <p><strong>Fecha creación:</strong> ${team.fecha_creacion ? new Date(team.fecha_creacion).toLocaleDateString() : 'N/A'}</p>
-                        <button class="btn btn-primary" onclick="viewTeamPlayers(${team.id_equipo})">Ver Jugadores</button>
-                        <button class="btn btn-success" onclick="openAddPlayerModal(${team.id_equipo})">+ Agregar Jugador</button>
-                    </div>
-                `).join('');
+                if (teams.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚽</div>
+                            <h3>No tienes equipos aún</h3>
+                            <p>Crea tu primer equipo para comenzar</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                for (const team of teams) {
+                    // Obtener jugadores del equipo
+                    let players = [];
+                    try {
+                        players = await apiRequest(`/teams/${team.id_equipo}/players/`);
+                    } catch (error) {
+                        console.error(`Error cargando jugadores del equipo ${team.id_equipo}:`, error);
+                    }
+
+                    const teamCard = document.createElement('div');
+                    teamCard.className = 'team-card';
+                    teamCard.innerHTML = `
+                        <div class="team-card-header">
+                            <div>
+                                <h3>${team.nombre}
+                                    <span class="player-count">${players.length}/15 jugadores</span>
+                                </h3>
+                                <p style="color: #666; margin-top: 5px;">Creado: ${team.fecha_creacion ? new Date(team.fecha_creacion).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                            <div class="team-card-actions">
+                                <button class="btn btn-primary btn-small" onclick="openAddPlayerModal(${team.id_equipo})">
+                                    + Agregar Jugador
+                                </button>
+                                <button class="toggle-players-btn" onclick="togglePlayers(${team.id_equipo})">
+                                    <span id="toggle-text-${team.id_equipo}">▼ Ver Jugadores</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="players-${team.id_equipo}" class="players-section hidden">
+                            ${renderPlayers(players, team.id_equipo)}
+                        </div>
+                    `;
+
+                    container.appendChild(teamCard);
+                }
             } catch (error) {
                 showAlert(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function renderPlayers(players, teamId) {
+            if (players.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <p>No hay jugadores en este equipo</p>
+                        <button class="btn btn-primary btn-small" onclick="openAddPlayerModal(${teamId})">
+                            Agregar primer jugador
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Contadores por estado
+            const validados = players.filter(p => p.estado_validacion === 'Validado').length;
+            const pendientes = players.filter(p => p.estado_validacion === 'Pendiente').length;
+            const rechazados = players.filter(p => p.estado_validacion === 'Rechazado').length;
+
+            let html = `
+                <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <strong>Resumen:</strong>
+                    <span class="badge badge-success">${validados} Validados</span>
+                    <span class="badge badge-warning">${pendientes} Pendientes</span>
+                    ${rechazados > 0 ? `<span class="badge badge-danger">${rechazados} Rechazados</span>` : ''}
+                </div>
+            `;
+
+            players.forEach(player => {
+                const badgeClass = player.estado_validacion === 'Validado' ? 'badge-success' :
+                                  player.estado_validacion === 'Rechazado' ? 'badge-danger' : 'badge-warning';
+                
+                const edad = calcularEdad(player.fecha_nacimiento);
+                
+                html += `
+                    <div class="player-item">
+                        <div class="player-info">
+                            <div class="player-name">
+                                ${player.nombre_completo}
+                                <span class="badge ${badgeClass}">${player.estado_validacion}</span>
+                            </div>
+                            <div class="player-details">
+                                <strong>CC:</strong> ${player.cedula} | 
+                                <strong>Edad:</strong> ${edad} años | 
+                                <strong>Camiseta:</strong> ${player.numero_camiseta || 'N/A'} | 
+                                <strong>Tipo:</strong> ${player.tipo_jugador?.nombre || 'N/A'}
+                            </div>
+                        </div>
+                        <div>
+                            ${player.foto_url ? `<a href="${API_URL}/static/uploads/${player.foto_url.split('/').pop()}" target="_blank" class="btn btn-secondary btn-small">Ver Foto</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function calcularEdad(fechaNacimiento) {
+            const hoy = new Date();
+            const nacimiento = new Date(fechaNacimiento);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+            
+            return edad;
+        }
+
+        function togglePlayers(teamId) {
+            const playersSection = document.getElementById(`players-${teamId}`);
+            const toggleText = document.getElementById(`toggle-text-${teamId}`);
+            
+            if (playersSection.classList.contains('hidden')) {
+                playersSection.classList.remove('hidden');
+                toggleText.textContent = '▲ Ocultar Jugadores';
+            } else {
+                playersSection.classList.add('hidden');
+                toggleText.textContent = '▼ Ver Jugadores';
             }
         }
 
@@ -1094,7 +1270,7 @@
                     <div class="card">
                         <h3>${team.nombre}</h3>
                         <p><strong>Fecha creación:</strong> ${team.fecha_creacion ? new Date(team.fecha_creacion).toLocaleDateString() : 'N/A'}</p>
-                        <button class="btn btn-primary" onclick="viewTeamPlayers(${team.id_equipo})">Ver Jugadores</button>
+                        <button class="btn btn-primary btn-small" onclick="viewTeamPlayersModal(${team.id_equipo})">Ver Jugadores</button>
                     </div>
                 `).join('');
             } catch (error) {
@@ -1127,26 +1303,30 @@
             }
         });
 
-        async function viewTeamPlayers(teamId) {
+        async function viewTeamPlayersModal(teamId) {
             try {
                 const players = await apiRequest(`/teams/${teamId}/players/`);
 
-                let html = '<h3>Jugadores del Equipo</h3><table class="table"><thead><tr><th>Nombre</th><th>Cédula</th><th>Camiseta</th><th>Estado</th></tr></thead><tbody>';
-
-                players.forEach(player => {
-                    const badgeClass = player.estado_validacion === 'Validado' ? 'badge-success' :
-                                      player.estado_validacion === 'Rechazado' ? 'badge-danger' : 'badge-warning';
-                    html += `
-                        <tr>
-                            <td>${player.nombre_completo}</td>
-                            <td>${player.cedula}</td>
-                            <td>${player.numero_camiseta || 'N/A'}</td>
-                            <td><span class="badge ${badgeClass}">${player.estado_validacion}</span></td>
-                        </tr>
-                    `;
-                });
-
-                html += '</tbody></table>';
+                let html = '<h3>Jugadores del Equipo</h3>';
+                
+                if (players.length === 0) {
+                    html += '<p>No hay jugadores en este equipo</p>';
+                } else {
+                    html += '<table class="table"><thead><tr><th>Nombre</th><th>Cédula</th><th>Camiseta</th><th>Estado</th></tr></thead><tbody>';
+                    players.forEach(player => {
+                        const badgeClass = player.estado_validacion === 'Validado' ? 'badge-success' :
+                                          player.estado_validacion === 'Rechazado' ? 'badge-danger' : 'badge-warning';
+                        html += `
+                            <tr>
+                                <td>${player.nombre_completo}</td>
+                                <td>${player.cedula}</td>
+                                <td>${player.numero_camiseta || 'N/A'}</td>
+                                <td><span class="badge ${badgeClass}">${player.estado_validacion}</span></td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                }
 
                 const container = document.createElement('div');
                 container.innerHTML = html;
@@ -1234,9 +1414,14 @@
                     throw new Error(error.detail || 'Error al agregar jugador');
                 }
 
-                showAlert('Jugador agregado exitosamente. Pendiente de validación.', 'success');
+                showAlert('¡Jugador agregado exitosamente! Pendiente de validación por el administrador.', 'success');
                 closeModal('addPlayerModal');
                 document.getElementById('addPlayerForm').reset();
+                document.getElementById('photoFileName').textContent = '';
+                document.getElementById('docFileName').textContent = '';
+                
+                // ✅ CLAVE: Recargar la vista de equipos para mostrar el nuevo jugador
+                loadMyTeams();
                 loadDashboard();
             } catch (error) {
                 showAlert(`Error: ${error.message}`, 'error');
@@ -1258,12 +1443,12 @@
                     <div class="card">
                         <h3>${player.nombre_completo}</h3>
                         <p><strong>Cédula:</strong> ${player.cedula}</p>
-                        <p><strong>Fecha Nacimiento:</strong> ${player.fecha_nacimiento}</p>
+                        <p><strong>Fecha Nacimiento:</strong> ${new Date(player.fecha_nacimiento).toLocaleDateString()} (${calcularEdad(player.fecha_nacimiento)} años)</p>
                         <p><strong>Tipo:</strong> ${player.tipo_jugador.nombre}</p>
                         <p><strong>Camiseta:</strong> ${player.numero_camiseta || 'N/A'}</p>
                         <div style="margin-top: 10px;">
-                            <a href="${API_URL}/${player.foto_url}" target="_blank" class="btn btn-secondary">Ver Foto</a>
-                            <a href="${API_URL}/${player.documento_probatorio_url}" target="_blank" class="btn btn-secondary">Ver Documento</a>
+                            <a href="${API_URL}/static/uploads/${player.foto_url.split('/').pop()}" target="_blank" class="btn btn-secondary btn-small">Ver Foto</a>
+                            <a href="${API_URL}/static/uploads/${player.documento_probatorio_url.split('/').pop()}" target="_blank" class="btn btn-secondary btn-small">Ver Documento</a>
                         </div>
                         <div style="margin-top: 15px;">
                             <button class="btn btn-success" onclick="validatePlayer(${player.id_jugador}, 'Validado')">✓ Validar</button>
@@ -1299,14 +1484,25 @@
                 const tournaments = await apiRequest('/tournaments/');
                 const container = document.getElementById('tournamentsList');
 
+                if (tournaments.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏆</div>
+                            <h3>No hay torneos creados</h3>
+                            <p>Crea el primer torneo para comenzar</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 container.innerHTML = tournaments.map(t => `
                     <div class="card">
                         <h3>${t.nombre}</h3>
                         <p><strong>Estado:</strong> ${t.esta_activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-warning">Inactivo</span>'}</p>
                         ${t.fecha_inicio ? `<p><strong>Inicio:</strong> ${new Date(t.fecha_inicio).toLocaleDateString()}</p>` : ''}
                         ${t.fecha_fin ? `<p><strong>Fin:</strong> ${new Date(t.fecha_fin).toLocaleDateString()}</p>` : ''}
-                        <button class="btn btn-primary" onclick="viewTournamentPhases(${t.id_torneo})">Ver Fases</button>
-                        ${!t.esta_activo ? `<button class="btn btn-success" onclick="activateTournament(${t.id_torneo})">Activar</button>` : ''}
+                        <button class="btn btn-primary btn-small" onclick="viewTournamentPhases(${t.id_torneo})">Ver Fases</button>
+                        ${!t.esta_activo ? `<button class="btn btn-success btn-small" onclick="activateTournament(${t.id_torneo})">Activar</button>` : ''}
                     </div>
                 `).join('');
             } catch (error) {
